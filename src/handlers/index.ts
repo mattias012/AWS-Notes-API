@@ -1,8 +1,14 @@
 import { APIGatewayProxyHandler } from 'aws-lambda';
+import { formatJSONResponse } from '../utils/responseUtils';
 
 export const handler: APIGatewayProxyHandler = async (event) => {
-  return {
-    statusCode: 200,
-    body: JSON.stringify({ message: 'Hello from Serverless TypeScript!' }),
-  };
-}
+  try {
+    //my logic goes here in the future
+    const responseMessage = { message: 'Hello test!' };
+
+    return formatJSONResponse(200, responseMessage);
+  } catch (error) {
+    const typedError = error as Error;
+    return formatJSONResponse(500, { message: 'Internal Server Error', error: typedError.message });
+  }  
+};

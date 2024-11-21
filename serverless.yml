@@ -1,12 +1,17 @@
 service: notes-api
 
-frameworkVersion: '3'
-
 provider:
   name: aws
-  runtime: nodejs18.x
-  region: eu-north-1
-  stage: dev
+  runtime: nodejs20.x
+  region: ${env:REGION}
+  iam:
+    role: ${env:AWS_LAMBDA_ROLE_ARN}
+  environment:
+    NOTES_TABLE: ${env:NOTES_TABLE}
+    JWT_SECRET: ${env:JWT_SECRET}
+
+package:
+  individually: true
 
 functions:
   getNotes:
@@ -19,3 +24,4 @@ functions:
 
 plugins:
   - serverless-offline
+  - serverless-dotenv-plugin

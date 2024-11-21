@@ -20,6 +20,8 @@
     "joi": "^17.13.3",
     "jsonwebtoken": "^9.0.2",
     "middy": "^0.24.0",
+    "serverless": "^4.4.11",
+    "serverless-dotenv-plugin": "^6.0.0",
     "serverless-offline": "^14.3.4"
   }
 }
