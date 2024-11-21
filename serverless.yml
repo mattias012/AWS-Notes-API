@@ -1,0 +1,21 @@
+service: notes-api
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: eu-north-1
+  stage: dev
+
+functions:
+  getNotes:
+    handler: dist/handlers/index.handler
+    events:
+      - http:
+          path: api/notes
+          method: get
+          cors: true
+
+plugins:
+  - serverless-offline
