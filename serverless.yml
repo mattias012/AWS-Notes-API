@@ -12,6 +12,15 @@ provider:
 
 package:
   individually: true
+  exclude:
+    - node_modules/aws-sdk/**         # AWS SDK finns redan i Lambda-miljön
+    - node_modules/typescript/**      # TypeScript behövs inte under runtime
+    - node_modules/@types/**          # Typdefinitioner behövs inte
+    - src/**/*.ts                     # TypeScript-filerna behövs inte under runtime
+    - .vscode/**                      # Redigerarinställningar
+    - .env                            # Miljövariabler ska inte inkluderas direkt
+    - tsconfig.json                   # TypeScript-konfigurationsfil behövs inte
+    - package-lock.json               # Denna behövs inte under runtime
 
 functions:
   getNotes:
@@ -23,5 +32,4 @@ functions:
           cors: true
 
 plugins:
-  - serverless-offline
   - serverless-dotenv-plugin
