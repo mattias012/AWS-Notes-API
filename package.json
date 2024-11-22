@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "build": "ts-node webpack.config.ts",
+    "deploy": "npm run build && serverless deploy",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -11,8 +13,13 @@
   "description": "",
   "devDependencies": {
     "@types/node": "^22.9.1",
+    "@types/webpack": "^5.28.5",
+    "serverless-webpack": "^5.15.0",
+    "ts-loader": "^9.5.1",
     "ts-node": "^10.9.2",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "webpack": "^5.96.1",
+    "webpack-cli": "^5.1.4"
   },
   "dependencies": {
     "@middy/core": "^5.5.1",
