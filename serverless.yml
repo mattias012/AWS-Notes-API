@@ -9,6 +9,8 @@ provider:
   environment:
     NOTES_TABLE: ${env:NOTES_TABLE}
     JWT_SECRET: ${env:JWT_SECRET}
+  build:
+    esbuild: false
 
 package:
   individually: true
@@ -32,5 +34,4 @@ functions:
           cors: true
 
 plugins:
-  - serverless-webpack
   - serverless-dotenv-plugin
