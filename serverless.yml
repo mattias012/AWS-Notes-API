@@ -9,8 +9,16 @@ provider:
   environment:
     NOTES_TABLE: ${env:NOTES_TABLE}
     JWT_SECRET: ${env:JWT_SECRET}
-  build:
-    esbuild: false
+
+custom:
+  esbuild:
+    bundle: true           # Bundlar alla beroenden i en enda fil
+    minify: true           # Minimerar koden för att minska storleken
+    sourcemap: false       # Avaktivera sourcemaps för att hålla paketet mindre
+    exclude: ['aws-sdk']   # Exkludera stora moduler som AWS SDK eftersom den redan finns i Lambda-miljön
+    target: 'node20'       # Använd den specifika Node.js-versionen för optimering
+    platform: 'node'       # Specifiera att ESBuild ska bygga för Node.js-miljö
+    concurrency: 10        # Hur många build-processer som ska köras parallellt (kan hjälpa till att snabba upp byggprocessen)
 
 package:
   individually: true
@@ -32,6 +40,3 @@ functions:
           path: api/notes
           method: get
           cors: true
-
-plugins:
-  - serverless-dotenv-plugin

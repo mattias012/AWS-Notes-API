@@ -1,10 +1,9 @@
 import { APIGatewayProxyHandler } from 'aws-lambda';
 import { formatJSONResponse } from '../utils/responseUtils';
-
-import * as dotenv from 'dotenv';
-dotenv.config();
+import '../utils/config';
 
 const tableName = process.env.NOTES_TABLE;
+const jwtSecret = process.env.JWT_SECRET;
 
 
 export const handler: APIGatewayProxyHandler = async (event) => {
