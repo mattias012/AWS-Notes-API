@@ -1,6 +1,6 @@
 import { APIGatewayProxyHandler } from 'aws-lambda';
-import { formatJSONResponse } from '../utils/responseUtils';
-import '../utils/config';
+import { formatJSONResponse } from '../../utils/responseUtils';
+import '../../utils/config';
 
 const tableName = process.env.NOTES_TABLE;
 const jwtSecret = process.env.JWT_SECRET;
