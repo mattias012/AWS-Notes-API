@@ -7,8 +7,8 @@ provider:
   iam:
     role: ${env:AWS_LAMBDA_ROLE_ARN}
   environment:
-    NOTES_TABLE: ${self:service}-${self:provider.stage}-notes
-    USERS_TABLE: ${self:service}-${self:provider.stage}-users
+    NOTES_TABLE: ${env:NOTES_TABLE}
+    USERS_TABLE: ${env:USERS_TABLE}
     JWT_SECRET: ${env:JWT_SECRET}
 
 custom:
@@ -61,7 +61,7 @@ resources:
     UsersTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${self:provider.environment.USERS_TABLE}
+        TableName: ${env:USERS_TABLE}
         AttributeDefinitions:
           - AttributeName: "email"
             AttributeType: "S"
@@ -73,7 +73,7 @@ resources:
     NotesTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${self:provider.environment.NOTES_TABLE}
+        TableName: ${env:NOTES_TABLE}
         AttributeDefinitions:
           - AttributeName: "userId"
             AttributeType: "S"
