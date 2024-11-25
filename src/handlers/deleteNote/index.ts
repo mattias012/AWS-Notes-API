@@ -1,5 +1,4 @@
-//detenote
-//includes soft delete to keep data in the database
+//deleteNote with soft delete and TTL for automatic hard delete
 import { APIGatewayProxyHandler } from 'aws-lambda';
 import config from '../../utils/config'; // Import config for DynamoDB commands, etc.
 import { UpdateCommand, UpdateCommandOutput } from '@aws-sdk/lib-dynamodb'; // Import UpdateCommand to update the item in DynamoDB
@@ -11,26 +10,30 @@ const NOTES_TABLE = process.env.NOTES_TABLE || 'notes';
 
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
-    //Validate token and extract userId
+    // Validate token and extract userId
     const userId = validateToken(event.headers.Authorization);
 
-    //Check if noteId exists in path parameters
+    // Check if noteId exists in path parameters
     const { noteId } = event.pathParameters || {};
     if (!noteId) {
       return formatJSONResponse(400, { message: 'Missing noteId in path parameters.' });
     }
 
-    //Set up the parameters to mark the note as deleted (soft delete) in DynamoDB
+    // Set TTL value to 30 days from now (in seconds)
+    const ttl = Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60;
+
+    // Set up the parameters to mark the note as deleted (soft delete) in DynamoDB and set TTL for automatic hard delete
     const params = {
       TableName: NOTES_TABLE,
       Key: {
         userId,
         noteId,
       },
-      UpdateExpression: 'SET deleted = :deleted, modifiedAt = :modifiedAt',
+      UpdateExpression: 'SET deleted = :deleted, modifiedAt = :modifiedAt, ttl = :ttl',
       ExpressionAttributeValues: {
         ':deleted': true,
         ':modifiedAt': new Date().toISOString(),
+        ':ttl': ttl, // Set the ttl attribute to automatically delete the item after 30 days (also set TTL on the table in serverless.yml)
       },
       ReturnValues: ReturnValue.ALL_NEW, // Return all updated attributes after the operation
     };

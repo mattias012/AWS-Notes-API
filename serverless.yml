@@ -88,6 +88,13 @@ functions:
           path: api/user/login
           method: post
 
+  restoreNote:
+    handler: src/handlers/restoreNote/index.handler
+    events:
+      - http:
+          path: api/notes/{noteId}/restore
+          method: put
+          cors: true
 
 resources:
   Resources:
@@ -102,7 +109,7 @@ resources:
           - AttributeName: "email"
             KeyType: "HASH"
         BillingMode: PAY_PER_REQUEST
-
+    
     NotesTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -118,3 +125,6 @@ resources:
           - AttributeName: "noteId"
             KeyType: "RANGE"
         BillingMode: PAY_PER_REQUEST
+        TimeToLiveSpecification:
+          AttributeName: "ttl"  # attribute to store the expiration time
+          Enabled: true         # time to live activated
