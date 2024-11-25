@@ -1,20 +1,35 @@
-// src/handlers/login/index.ts
+// src/handlers/login.ts
 import { APIGatewayProxyHandler } from 'aws-lambda';
-import { dynamoDb, bcrypt, jwt, GetCommand } from '../../utils/config'; // Importerar dynamoDb, bcrypt, jwt, GetCommand från config
-import { formatJSONResponse } from '../../utils/responseUtils'; // Importera responseUtils
+import config from '../../utils/config'; // Import the whole config as an object
+import { formatJSONResponse } from '../../utils/responseUtils';
 
 const USERS_TABLE = process.env.USERS_TABLE || 'users';
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
 
+// Define Joi schema for validation
+const loginSchema = config.Joi.object({
+  email: config.Joi.string().email().required().messages({
+    "string.email": "Invalid email format.",
+    "any.required": "Email is required.",
+  }),
+  password: config.Joi.string().required().messages({
+    "any.required": "Password is required.",
+  }),
+});
+
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
-    const { email, password } = JSON.parse(event.body || '{}');
+    const body = JSON.parse(event.body || '{}');
 
-    if (!email || !password) {
-      return formatJSONResponse(400, { message: 'Email and password are required.' });
+    // Validate input with Joi
+    const { error } = loginSchema.validate(body);
+    if (error) {
+      return formatJSONResponse(400, { message: error.details[0].message });
     }
 
-    // Hämta användaren från DynamoDB
+    const { email, password } = body;
+
+    // Get user from DynamoDB
     const params = {
       TableName: USERS_TABLE,
       Key: {
@@ -22,22 +37,21 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       },
     };
 
-    const result = await dynamoDb.send(new GetCommand(params));
-
+    const result = await config.dynamoDb.send(new config.GetCommand(params));
     if (!result.Item) {
       return formatJSONResponse(401, { message: 'Invalid credentials.' });
     }
 
     const user = result.Item;
 
-    // Kontrollera lösenordet
-    const validPassword = await bcrypt.compare(password, user.password);
+    // Compare passwords
+    const validPassword = await config.bcrypt.compare(password, user.password);
     if (!validPassword) {
       return formatJSONResponse(401, { message: 'Invalid credentials.' });
     }
 
-    // Skapa en JWT-token
-    const token = jwt.sign(
+    // Generate JWT token
+    const token = config.jwt.sign(
       {
         userId: user.userId,
         email: user.email,
@@ -48,6 +62,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       }
     );
 
+    // Return token
     return formatJSONResponse(200, { token });
   } catch (error) {
     console.error('Error in login:', error);
