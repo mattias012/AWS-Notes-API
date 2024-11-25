@@ -35,11 +35,19 @@ package:
 
 functions:
   getNotes:
-    handler: dist/handlers/index.handler
+    handler: src/handlers/getNotes/index.handler
     events:
       - http:
           path: api/notes
           method: get
+          cors: true
+
+  createNote:
+    handler: src/handlers/createNote/index.handler
+    events:
+      - http:
+          path: api/notes
+          method: post
           cors: true
 
   signup:
