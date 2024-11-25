@@ -5,14 +5,17 @@ import jwt from 'jsonwebtoken';
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
 
 /**
- * Validates a JWT token and returns the user ID if successful.
- * Throws an error if the token is invalid.
- *
- * @param {string} token - The JWT token to be validated
- * @returns {string} - The user ID if the token is valid
- * @throws {Error} - If the token is missing or invalid
+ * Validates the Authorization header and JWT token.
+ * @param {string | undefined} authHeader - The Authorization header to be validated.
+ * @returns {string} - The user ID if the token is valid.
+ * @throws {Error} - If the Authorization header or token is invalid.
  */
-const validateToken = (token: string): string => {
+const validateToken = (authHeader: string | undefined): string => {
+  if (!authHeader) {
+    throw new Error('Missing Authorization header.');
+  }
+
+  const token = authHeader.split(' ')[1];
   if (!token) {
     throw new Error('Missing or invalid Authorization token.');
   }

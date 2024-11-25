@@ -1,26 +1,25 @@
-//detenote
-//includes soft delete to keep data in the database
+// src/handlers/restoreNote/index.ts
 import { APIGatewayProxyHandler } from 'aws-lambda';
-import config from '../../utils/config'; // Import config for DynamoDB commands, etc.
-import { UpdateCommand, UpdateCommandOutput } from '@aws-sdk/lib-dynamodb'; // Import UpdateCommand to update the item in DynamoDB
-import { formatJSONResponse } from '../../utils/responseUtils'; // Helper function to format responses
-import validateToken from '../../utils/auth'; // Import validateToken for token validation
-import { ReturnValue } from "@aws-sdk/client-dynamodb"; // Import ReturnValue for TypeScript typing
+import config from '../../utils/config';
+import { formatJSONResponse } from '../../utils/responseUtils';
+import { UpdateCommand, UpdateCommandOutput } from "@aws-sdk/lib-dynamodb";
+import { ReturnValue } from "@aws-sdk/client-dynamodb";
+import validateToken from '../../utils/auth';
 
 const NOTES_TABLE = process.env.NOTES_TABLE || 'notes';
 
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
-    //Validate token and extract userId
+    // Validate token and extract userId
     const userId = validateToken(event.headers.Authorization);
 
-    //Check if noteId exists in path parameters
+    // Check if noteId exists in path parameters
     const { noteId } = event.pathParameters || {};
     if (!noteId) {
       return formatJSONResponse(400, { message: 'Missing noteId in path parameters.' });
     }
 
-    //Set up the parameters to mark the note as deleted (soft delete) in DynamoDB
+    // Set up parameters to restore the note by setting `deleted` to false
     const params = {
       TableName: NOTES_TABLE,
       Key: {
@@ -29,7 +28,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       },
       UpdateExpression: 'SET deleted = :deleted, modifiedAt = :modifiedAt',
       ExpressionAttributeValues: {
-        ':deleted': true,
+        ':deleted': false,
         ':modifiedAt': new Date().toISOString(),
       },
       ReturnValues: ReturnValue.ALL_NEW, // Return all updated attributes after the operation
@@ -40,13 +39,13 @@ export const handler: APIGatewayProxyHandler = async (event) => {
 
     // Check if the update was successful
     if (!result.Attributes) {
-      return formatJSONResponse(404, { message: 'Note not found.' });
+      return formatJSONResponse(404, { message: 'Note not found or could not be restored.' });
     }
 
-    // Return success response after soft deletion
-    return formatJSONResponse(200, { message: 'Note marked as deleted successfully.' });
+    // Return success response after restoration
+    return formatJSONResponse(200, { message: 'Note restored successfully.', note: result.Attributes });
   } catch (error) {
-    console.error('Error in deleteNote:', error);
+    console.error('Error in restoreNote:', error);
     return formatJSONResponse(500, { message: error.message || 'Internal Server Error' });
   }
 };
