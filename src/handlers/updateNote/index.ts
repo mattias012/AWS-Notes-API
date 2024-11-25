@@ -4,19 +4,10 @@ import config from '../../utils/config';
 import { formatJSONResponse } from '../../utils/responseUtils';
 import { UpdateCommand, UpdateCommandOutput } from "@aws-sdk/lib-dynamodb";
 import { ReturnValue } from "@aws-sdk/client-dynamodb"; // Import ReturnValue for TypeScript typing
+import { updateNoteSchema } from '../../utils/validators'; // Import the validation schema
 
 const NOTES_TABLE = process.env.NOTES_TABLE || 'notes';
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
-
-// Define Joi schema for note update validation
-const updateNoteSchema = config.Joi.object({
-  title: config.Joi.string().max(50).optional().messages({
-    "string.max": "Title must not exceed 50 characters.",
-  }),
-  textdata: config.Joi.string().max(300).optional().messages({
-    "string.max": "Text must not exceed 300 characters.",
-  }),
-});
 
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
