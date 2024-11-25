@@ -8,35 +8,113 @@ provider:
     role: ${env:AWS_LAMBDA_ROLE_ARN}
   environment:
     NOTES_TABLE: ${env:NOTES_TABLE}
+    USERS_TABLE: ${env:USERS_TABLE}
     JWT_SECRET: ${env:JWT_SECRET}
 
 custom:
   esbuild:
-    bundle: true           # Bundlar alla beroenden i en enda fil
-    minify: true           # Minimerar koden för att minska storleken
-    sourcemap: false       # Avaktivera sourcemaps för att hålla paketet mindre
-    exclude: ['aws-sdk']   # Exkludera stora moduler som AWS SDK eftersom den redan finns i Lambda-miljön
-    target: 'node20'       # Använd den specifika Node.js-versionen för optimering
-    platform: 'node'       # Specifiera att ESBuild ska bygga för Node.js-miljö
-    concurrency: 10        # Hur många build-processer som ska köras parallellt (kan hjälpa till att snabba upp byggprocessen)
+    bundle: true
+    minify: true
+    sourcemap: false
+    exclude: ['aws-sdk']
+    target: 'node20'
+    platform: 'node'
+    concurrency: 10
 
 package:
   individually: true
   exclude:
-    - node_modules/aws-sdk/**         # AWS SDK finns redan i Lambda-miljön
-    - node_modules/typescript/**      # TypeScript behövs inte under runtime
-    - node_modules/@types/**          # Typdefinitioner behövs inte
-    - src/**/*.ts                     # TypeScript-filerna behövs inte under runtime
-    - .vscode/**                      # Redigerarinställningar
-    - .env                            # Miljövariabler ska inte inkluderas direkt
-    - tsconfig.json                   # TypeScript-konfigurationsfil behövs inte
-    - package-lock.json               # Denna behövs inte under runtime
+    - node_modules/aws-sdk/**
+    - node_modules/typescript/**
+    - node_modules/@types/**
+    - src/**/*.ts
+    - .vscode/**
+    - .env
+    - tsconfig.json
+    - package-lock.json
 
 functions:
   getNotes:
-    handler: dist/handlers/index.handler
+    handler: src/handlers/getNotes/index.handler
     events:
       - http:
           path: api/notes
           method: get
           cors: true
+
+  getNote:
+    handler: src/handlers/getNote/index.handler
+    events:
+      - http:
+          path: api/notes/{noteId}
+          method: get
+          cors: true
+
+  createNote:
+    handler: src/handlers/createNote/index.handler
+    events:
+      - http:
+          path: api/notes
+          method: post
+          cors: true
+
+  updateNote:
+    handler: src/handlers/updateNote/index.handler
+    events:
+      - http:
+          path: api/notes/{noteId}
+          method: put
+          cors: true
+
+  deleteNote:
+    handler: src/handlers/deleteNote/index.handler
+    events:
+      - http:
+          path: api/notes/{noteId}
+          method: delete
+          cors: true
+
+  signup:
+    handler: src/handlers/signup/index.handler
+    events:
+      - http:
+          path: api/user/signup
+          method: post
+
+  login:
+    handler: src/handlers/login/index.handler
+    events:
+      - http:
+          path: api/user/login
+          method: post
+
+
+resources:
+  Resources:
+    UsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${env:USERS_TABLE}
+        AttributeDefinitions:
+          - AttributeName: "email"
+            AttributeType: "S"
+        KeySchema:
+          - AttributeName: "email"
+            KeyType: "HASH"
+        BillingMode: PAY_PER_REQUEST
+
+    NotesTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${env:NOTES_TABLE}
+        AttributeDefinitions:
+          - AttributeName: "userId"
+            AttributeType: "S"
+          - AttributeName: "noteId"
+            AttributeType: "S"
+        KeySchema:
+          - AttributeName: "userId"
+            KeyType: "HASH"
+          - AttributeName: "noteId"
+            KeyType: "RANGE"
+        BillingMode: PAY_PER_REQUEST
