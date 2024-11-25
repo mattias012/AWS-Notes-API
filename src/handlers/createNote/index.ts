@@ -2,21 +2,10 @@
 import { APIGatewayProxyHandler } from 'aws-lambda';
 import config from '../../utils/config'; // Import the whole config as an object
 import { formatJSONResponse } from '../../utils/responseUtils';
+import { noteSchema } from '../../utils/validators'; // Import the validation schema
 
 const NOTES_TABLE = process.env.NOTES_TABLE || 'notes';
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
-
-// Define Joi schema for note validation
-const noteSchema = config.Joi.object({
-  title: config.Joi.string().max(50).required().messages({
-    "string.max": "Title must not exceed 50 characters.",
-    "any.required": "Title is required.",
-  }),
-  textdata: config.Joi.string().max(300).required().messages({
-    "string.max": "Textdata must not exceed 300 characters.",
-    "any.required": "Textdata is required.",
-  }),
-});
 
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
