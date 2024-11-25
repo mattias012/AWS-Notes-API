@@ -3,9 +3,9 @@ import { APIGatewayProxyHandler } from 'aws-lambda';
 import config from '../../utils/config';
 import { DeleteCommand } from '@aws-sdk/lib-dynamodb';
 import { formatJSONResponse } from '../../utils/responseUtils';
+import validateToken from '../../utils/auth';
 
 const NOTES_TABLE = process.env.NOTES_TABLE || 'notes';
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
 
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
@@ -15,14 +15,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     if (!token) {
       return formatJSONResponse(401, { message: 'Missing or invalid Authorization token.' });
     }
-
-    let userId;
-    try {
-      const decodedToken = config.jwt.verify(token, JWT_SECRET);
-      userId = (decodedToken as any).userId;
-    } catch (error) {
-      return formatJSONResponse(401, { message: 'Invalid token.' });
-    }
+    const userId = validateToken(token);
 
     const { noteId } = event.pathParameters || {};
     if (!noteId) {
@@ -43,6 +36,6 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     return formatJSONResponse(200, { message: 'Note deleted successfully.' });
   } catch (error) {
     console.error('Error in deleteNote:', error);
-    return formatJSONResponse(500, { message: 'Internal Server Error' });
+    return formatJSONResponse(500, { message: error.message || 'Internal Server Error' });
   }
 };

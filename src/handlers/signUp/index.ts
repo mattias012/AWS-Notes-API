@@ -1,21 +1,10 @@
 // src/handlers/signup.ts
 import { APIGatewayProxyHandler } from 'aws-lambda';
-import config from '../../utils/config'; // Import the whole config as an object
+import config from '../../utils/config';
 import { formatJSONResponse } from '../../utils/responseUtils';
+import { signupSchema } from '../../utils/validators'; // Import signupSchema from validators
 
 const USERS_TABLE = process.env.USERS_TABLE || 'users';
-
-// Define Joi schema for validation
-const signupSchema = config.Joi.object({
-  email: config.Joi.string().email().required().messages({
-    "string.email": "Invalid email format.",
-    "any.required": "Email is required.",
-  }),
-  password: config.Joi.string().min(8).required().messages({
-    "string.min": "Password must be at least 8 characters long.",
-    "any.required": "Password is required.",
-  }),
-});
 
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {

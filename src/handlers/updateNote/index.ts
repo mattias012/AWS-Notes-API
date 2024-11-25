@@ -3,20 +3,11 @@ import { APIGatewayProxyHandler } from 'aws-lambda';
 import config from '../../utils/config';
 import { formatJSONResponse } from '../../utils/responseUtils';
 import { UpdateCommand, UpdateCommandOutput } from "@aws-sdk/lib-dynamodb";
-import { ReturnValue } from "@aws-sdk/client-dynamodb"; // Import ReturnValue for TypeScript typing
+import { ReturnValue } from "@aws-sdk/client-dynamodb";
+import { updateNoteSchema } from '../../utils/validators';
+import validateToken from '../../utils/auth';
 
 const NOTES_TABLE = process.env.NOTES_TABLE || 'notes';
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
-
-// Define Joi schema for note update validation
-const updateNoteSchema = config.Joi.object({
-  title: config.Joi.string().max(50).optional().messages({
-    "string.max": "Title must not exceed 50 characters.",
-  }),
-  textdata: config.Joi.string().max(300).optional().messages({
-    "string.max": "Text must not exceed 300 characters.",
-  }),
-});
 
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
@@ -26,14 +17,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     if (!token) {
       return formatJSONResponse(401, { message: 'Missing or invalid Authorization token.' });
     }
-
-    let userId;
-    try {
-      const decodedToken = config.jwt.verify(token, JWT_SECRET);
-      userId = (decodedToken as any).userId;
-    } catch (error) {
-      return formatJSONResponse(401, { message: 'Invalid token.' });
-    }
+    const userId = validateToken(token);
 
     const { noteId } = event.pathParameters || {};
     if (!noteId) {
@@ -64,20 +48,18 @@ export const handler: APIGatewayProxyHandler = async (event) => {
         ':textdata': textdata,
         ':modifiedAt': modifiedAt,
       },
-      ReturnValues: ReturnValue.ALL_NEW, // Use ReturnValue enum to set the correct type otherwise it defaults to 'NONE' and throws an error in vs code
+      ReturnValues: ReturnValue.ALL_NEW,
     };
 
     const result = await config.dynamoDb.send(new UpdateCommand(params)) as UpdateCommandOutput;
 
-    // Check if the update was successful
     if (!result.Attributes) {
       return formatJSONResponse(404, { message: 'Note not found.' });
     }
 
-    // Return updated note
     return formatJSONResponse(200, { note: result.Attributes });
   } catch (error) {
     console.error('Error in updateNote:', error);
-    return formatJSONResponse(500, { message: 'Internal Server Error' });
+    return formatJSONResponse(500, { message: error.message || 'Internal Server Error' });
   }
 };

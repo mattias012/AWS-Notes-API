@@ -1,21 +1,11 @@
 // src/handlers/login.ts
 import { APIGatewayProxyHandler } from 'aws-lambda';
-import config from '../../utils/config'; // Import the whole config as an object
+import config from '../../utils/config';
 import { formatJSONResponse } from '../../utils/responseUtils';
+import { loginSchema } from '../../utils/validators'; // Import loginSchema from validators
 
 const USERS_TABLE = process.env.USERS_TABLE || 'users';
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
-
-// Define Joi schema for validation
-const loginSchema = config.Joi.object({
-  email: config.Joi.string().email().required().messages({
-    "string.email": "Invalid email format.",
-    "any.required": "Email is required.",
-  }),
-  password: config.Joi.string().required().messages({
-    "any.required": "Password is required.",
-  }),
-});
 
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
