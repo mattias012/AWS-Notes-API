@@ -26,10 +26,13 @@ export const handler: APIGatewayProxyHandler = async (event) => {
         userId,
         noteId,
       },
-      UpdateExpression: 'SET deleted = :deleted, modifiedAt = :modifiedAt REMOVE ttl',
+      UpdateExpression: 'SET deleted = :deleted, modifiedAt = :modifiedAt REMOVE #ttl',
       ExpressionAttributeValues: {
         ':deleted': false,
         ':modifiedAt': new Date().toISOString(),
+      },
+      ExpressionAttributeNames: {
+        '#ttl': 'ttl', // Alias for ttl to avoid keyword conflict
       },
       ReturnValues: ReturnValue.ALL_NEW, // Return all updated attributes after the operation
     };
