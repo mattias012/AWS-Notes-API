@@ -58,7 +58,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
         userId,
         noteId,
       },
-      UpdateExpression: 'SET title = :title, text = :text, modifiedAt = :modifiedAt',
+      UpdateExpression: 'SET title = :title, textdata = :textdata, modifiedAt = :modifiedAt',
       ExpressionAttributeValues: {
         ':title': title,
         ':textdata': textdata,
