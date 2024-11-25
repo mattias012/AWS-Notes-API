@@ -1,4 +1,4 @@
-//deleteNote with soft delete and TTL for automatic hard delete
+// deleteNote with soft delete and TTL for automatic hard delete
 import { APIGatewayProxyHandler } from 'aws-lambda';
 import config from '../../utils/config'; // Import config for DynamoDB commands, etc.
 import { UpdateCommand, UpdateCommandOutput } from '@aws-sdk/lib-dynamodb'; // Import UpdateCommand to update the item in DynamoDB
@@ -29,11 +29,14 @@ export const handler: APIGatewayProxyHandler = async (event) => {
         userId,
         noteId,
       },
-      UpdateExpression: 'SET deleted = :deleted, modifiedAt = :modifiedAt, ttl = :ttl',
+      UpdateExpression: 'SET deleted = :deleted, modifiedAt = :modifiedAt, #ttl = :ttl',
       ExpressionAttributeValues: {
         ':deleted': true,
         ':modifiedAt': new Date().toISOString(),
         ':ttl': ttl, // Set the ttl attribute to automatically delete the item after 30 days (also set TTL on the table in serverless.yml)
+      },
+      ExpressionAttributeNames: {
+        '#ttl': 'ttl', // Use an alias for the reserved attribute name
       },
       ReturnValues: ReturnValue.ALL_NEW, // Return all updated attributes after the operation
     };
