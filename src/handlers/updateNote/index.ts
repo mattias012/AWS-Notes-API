@@ -13,7 +13,7 @@ const updateNoteSchema = config.Joi.object({
   title: config.Joi.string().max(50).optional().messages({
     "string.max": "Title must not exceed 50 characters.",
   }),
-  text: config.Joi.string().max(300).optional().messages({
+  textdata: config.Joi.string().max(300).optional().messages({
     "string.max": "Text must not exceed 300 characters.",
   }),
 });
@@ -48,7 +48,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       return formatJSONResponse(400, { message: error.details[0].message });
     }
 
-    const { title, text } = body;
+    const { title, textdata } = body;
     const modifiedAt = new Date().toISOString();
 
     // Update the note in DynamoDB
@@ -61,7 +61,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       UpdateExpression: 'SET title = :title, text = :text, modifiedAt = :modifiedAt',
       ExpressionAttributeValues: {
         ':title': title,
-        ':text': text,
+        ':textdata': textdata,
         ':modifiedAt': modifiedAt,
       },
       ReturnValues: ReturnValue.ALL_NEW, // Use ReturnValue enum to set the correct type otherwise it defaults to 'NONE' and throws an error in vs code

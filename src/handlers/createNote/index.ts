@@ -12,9 +12,9 @@ const noteSchema = config.Joi.object({
     "string.max": "Title must not exceed 50 characters.",
     "any.required": "Title is required.",
   }),
-  text: config.Joi.string().max(300).required().messages({
-    "string.max": "Text must not exceed 300 characters.",
-    "any.required": "Text is required.",
+  textdata: config.Joi.string().max(300).required().messages({
+    "string.max": "Textdata must not exceed 300 characters.",
+    "any.required": "Textdata is required.",
   }),
 });
 
@@ -44,7 +44,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       return formatJSONResponse(400, { message: error.details[0].message });
     }
 
-    const { title, text } = body;
+    const { title, textdata } = body;
 
     // Generate a unique note ID
     const noteId = config.uuidv4();
@@ -58,7 +58,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
         userId,
         noteId,
         title,
-        text,
+        textdata,
         createdAt,
         modifiedAt,
       },
