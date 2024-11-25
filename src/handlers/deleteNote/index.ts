@@ -1,8 +1,8 @@
-//to get ALL notes from an user
+// src/handlers/deleteNote/index.ts
 import { APIGatewayProxyHandler } from 'aws-lambda';
-import config from '../../utils/config'; // Import the whole config as an object
+import config from '../../utils/config';
+import { DeleteCommand } from '@aws-sdk/lib-dynamodb';
 import { formatJSONResponse } from '../../utils/responseUtils';
-import { QueryCommand, QueryCommandOutput } from "@aws-sdk/lib-dynamodb";
 
 const NOTES_TABLE = process.env.NOTES_TABLE || 'notes';
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
@@ -24,26 +24,25 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       return formatJSONResponse(401, { message: 'Invalid token.' });
     }
 
-    // Query DynamoDB to get all notes for the user
-    const params = {
-      TableName: NOTES_TABLE,
-      KeyConditionExpression: 'userId = :userId',
-      ExpressionAttributeValues: {
-        ':userId': userId,
-      },
-    };
-
-    const result = await config.dynamoDb.send(new QueryCommand(params)) as QueryCommandOutput;
-
-    // Type check to see if Items exists in the result
-    if (!result.Items) {
-      return formatJSONResponse(404, { message: 'No notes found.' });
+    const { noteId } = event.pathParameters || {};
+    if (!noteId) {
+      return formatJSONResponse(400, { message: 'Missing noteId in path parameters.' });
     }
 
-    // Return the user's notes
-    return formatJSONResponse(200, { notes: result.Items });
+    // Delete the note from DynamoDB
+    const params = {
+      TableName: NOTES_TABLE,
+      Key: {
+        userId,
+        noteId,
+      },
+    };
+    await config.dynamoDb.send(new DeleteCommand(params));
+
+    // Return success response
+    return formatJSONResponse(200, { message: 'Note deleted successfully.' });
   } catch (error) {
-    console.error('Error in getNotes:', error);
+    console.error('Error in deleteNote:', error);
     return formatJSONResponse(500, { message: 'Internal Server Error' });
   }
 };

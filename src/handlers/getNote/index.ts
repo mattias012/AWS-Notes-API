@@ -1,8 +1,8 @@
-//to get ALL notes from an user
+//to get only on note base on ID
 import { APIGatewayProxyHandler } from 'aws-lambda';
-import config from '../../utils/config'; // Import the whole config as an object
+import config from '../../utils/config';
 import { formatJSONResponse } from '../../utils/responseUtils';
-import { QueryCommand, QueryCommandOutput } from "@aws-sdk/lib-dynamodb";
+import { GetCommand, GetCommandOutput } from "@aws-sdk/lib-dynamodb";
 
 const NOTES_TABLE = process.env.NOTES_TABLE || 'notes';
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
@@ -24,26 +24,31 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       return formatJSONResponse(401, { message: 'Invalid token.' });
     }
 
-    // Query DynamoDB to get all notes for the user
+    const { noteId } = event.pathParameters || {};
+    if (!noteId) {
+      return formatJSONResponse(400, { message: 'Missing noteId in path parameters.' });
+    }
+
+    // Get the specific note from DynamoDB
     const params = {
       TableName: NOTES_TABLE,
-      KeyConditionExpression: 'userId = :userId',
-      ExpressionAttributeValues: {
-        ':userId': userId,
+      Key: {
+        userId,
+        noteId,
       },
     };
 
-    const result = await config.dynamoDb.send(new QueryCommand(params)) as QueryCommandOutput;
+    const result = await config.dynamoDb.send(new GetCommand(params)) as GetCommandOutput;
 
-    // Type check to see if Items exists in the result
-    if (!result.Items) {
-      return formatJSONResponse(404, { message: 'No notes found.' });
+    // Check if the note exists
+    if (!result.Item) {
+      return formatJSONResponse(404, { message: 'Note not found.' });
     }
 
-    // Return the user's notes
-    return formatJSONResponse(200, { notes: result.Items });
+    // Return the requested note
+    return formatJSONResponse(200, { note: result.Item });
   } catch (error) {
-    console.error('Error in getNotes:', error);
+    console.error('Error in getNote:', error);
     return formatJSONResponse(500, { message: 'Internal Server Error' });
   }
 };
