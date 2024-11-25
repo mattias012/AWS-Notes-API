@@ -1,4 +1,4 @@
-// src/handlers/signup.ts
+// This file contains the handler for the POST /signup endpoint.
 import { APIGatewayProxyHandler } from 'aws-lambda';
 import config from '../../utils/config';
 import { formatJSONResponse } from '../../utils/responseUtils';

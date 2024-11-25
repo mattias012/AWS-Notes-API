@@ -1,9 +1,9 @@
-// deleteNote with soft delete and TTL for automatic hard delete
+//restore delete specific note
 import { APIGatewayProxyHandler } from 'aws-lambda';
 import config from '../../utils/config'; // Import config for DynamoDB commands, etc.
-import { UpdateCommand, UpdateCommandOutput } from '@aws-sdk/lib-dynamodb'; // Import UpdateCommand to update the item in DynamoDB
+import { UpdateCommand, UpdateCommandOutput } from '@aws-sdk/lib-dynamodb'; // Import UpdateCommand to update item in DynamoDB
 import { formatJSONResponse } from '../../utils/responseUtils'; // Helper function to format responses
-import validateToken from '../../utils/auth'; // Import validateToken for token validation
+import validateAuthorizationHeader from '../../utils/auth'; // Import validateAuthorizationHeader for token validation
 import { ReturnValue } from "@aws-sdk/client-dynamodb"; // Import ReturnValue for TypeScript typing
 
 const NOTES_TABLE = process.env.NOTES_TABLE || 'notes';
@@ -11,7 +11,7 @@ const NOTES_TABLE = process.env.NOTES_TABLE || 'notes';
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
     // Validate token and extract userId
-    const userId = validateToken(event.headers.Authorization);
+    const userId = validateAuthorizationHeader(event.headers.Authorization);
 
     // Check if noteId exists in path parameters
     const { noteId } = event.pathParameters || {};
@@ -19,24 +19,20 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       return formatJSONResponse(400, { message: 'Missing noteId in path parameters.' });
     }
 
-    // Set TTL value to 30 days from now (in seconds)
-    const ttl = Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60;
-
-    // Set up the parameters to mark the note as deleted (soft delete) in DynamoDB and set TTL for automatic hard delete
+    // Set up the parameters to restore the note (set deleted flag to false) in DynamoDB
     const params = {
       TableName: NOTES_TABLE,
       Key: {
         userId,
         noteId,
       },
-      UpdateExpression: 'SET deleted = :deleted, modifiedAt = :modifiedAt, #ttl = :ttl',
+      UpdateExpression: 'SET deleted = :deleted, modifiedAt = :modifiedAt REMOVE #ttl',
       ExpressionAttributeValues: {
-        ':deleted': true,
+        ':deleted': false,
         ':modifiedAt': new Date().toISOString(),
-        ':ttl': ttl, // Set the ttl attribute to automatically delete the item after 30 days (also set TTL on the table in serverless.yml)
       },
       ExpressionAttributeNames: {
-        '#ttl': 'ttl', // Use an alias for the reserved attribute name
+        '#ttl': 'ttl', // Alias for ttl to avoid keyword conflict
       },
       ReturnValues: ReturnValue.ALL_NEW, // Return all updated attributes after the operation
     };
@@ -46,13 +42,13 @@ export const handler: APIGatewayProxyHandler = async (event) => {
 
     // Check if the update was successful
     if (!result.Attributes) {
-      return formatJSONResponse(404, { message: 'Note not found.' });
+      return formatJSONResponse(404, { message: 'Note not found or not eligible for restore.' });
     }
 
-    // Return success response after soft deletion
-    return formatJSONResponse(200, { message: 'Note deleted, you can restore it for 30 days if you change your mind' });
+    // Return success response after restoring
+    return formatJSONResponse(200, { message: 'Note restored successfully.', note: result.Attributes });
   } catch (error) {
-    console.error('Error in deleteNote:', error);
+    console.error('Error in restoreNote:', error);
     return formatJSONResponse(500, { message: error.message || 'Internal Server Error' });
   }
 };

@@ -1,36 +1,32 @@
-// src/handlers/getNotes/index.ts
+//get all notes for a user
 import { APIGatewayProxyHandler } from 'aws-lambda';
-import config from '../../utils/config';
+import config from '../../utils/config'; // Import the whole config as an object
 import { formatJSONResponse } from '../../utils/responseUtils';
 import { QueryCommand, QueryCommandOutput } from "@aws-sdk/lib-dynamodb";
-import validateToken from '../../utils/auth'; // Import validateToken from auth.ts
+import validateToken from '../../utils/auth';
 
 const NOTES_TABLE = process.env.NOTES_TABLE || 'notes';
 
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
-    const token = event.headers.Authorization?.split(' ')[1];
-
-    // Validate JWT token
-    if (!token) {
-      return formatJSONResponse(401, { message: 'Missing or invalid Authorization token.' });
-    }
-
-    const userId = validateToken(token);
+    // Validate token and extract userId
+    const userId = validateToken(event.headers.Authorization);
 
     // Query DynamoDB to get all notes for the user
     const params = {
       TableName: NOTES_TABLE,
       KeyConditionExpression: 'userId = :userId',
+      FilterExpression: 'deleted = :deleted',
       ExpressionAttributeValues: {
         ':userId': userId,
+        ':deleted': false, // Only get notes that are not marked as deleted
       },
     };
 
     const result = await config.dynamoDb.send(new QueryCommand(params)) as QueryCommandOutput;
 
     // Type check to see if Items exists in the result
-    if (!result.Items) {
+    if (!result.Items || result.Items.length === 0) {
       return formatJSONResponse(404, { message: 'No notes found.' });
     }
 
@@ -38,6 +34,6 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     return formatJSONResponse(200, { notes: result.Items });
   } catch (error) {
     console.error('Error in getNotes:', error);
-    return formatJSONResponse(500, { message: error.message || 'Internal Server Error' });
+    return formatJSONResponse(500, { message: 'Internal Server Error' });
   }
 };
