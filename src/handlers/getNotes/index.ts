@@ -1,4 +1,4 @@
-// src/handlers/getNotes/index.ts
+//get all notes for a user
 import { APIGatewayProxyHandler } from 'aws-lambda';
 import config from '../../utils/config'; // Import the whole config as an object
 import { formatJSONResponse } from '../../utils/responseUtils';

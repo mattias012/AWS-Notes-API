@@ -92,7 +92,7 @@ functions:
     handler: src/handlers/restoreNote/index.handler
     events:
       - http:
-          path: api/notes/{noteId}/restore
+          path: api/notes/restore/{noteId}
           method: put
           cors: true
 

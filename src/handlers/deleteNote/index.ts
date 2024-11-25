@@ -47,7 +47,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     }
 
     // Return success response after soft deletion
-    return formatJSONResponse(200, { message: 'Note marked as deleted successfully.' });
+    return formatJSONResponse(200, { message: 'Note deleted, you can restore it for 30 days if you change your mind' });
   } catch (error) {
     console.error('Error in deleteNote:', error);
     return formatJSONResponse(500, { message: error.message || 'Internal Server Error' });

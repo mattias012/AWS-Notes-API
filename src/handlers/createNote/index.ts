@@ -1,4 +1,4 @@
-// src/handlers/createNote/index.ts
+//createNote handler to create a new note
 import { APIGatewayProxyHandler } from 'aws-lambda';
 import config from '../../utils/config'; // Import the whole config as an object
 import { formatJSONResponse } from '../../utils/responseUtils';

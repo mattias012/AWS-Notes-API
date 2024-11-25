@@ -1,4 +1,5 @@
-// src/handlers/getNote/index.ts
+//getNote function
+//gets a specific note from the DynamoDB table
 import { APIGatewayProxyHandler } from 'aws-lambda';
 import config from '../../utils/config';
 import { formatJSONResponse } from '../../utils/responseUtils';

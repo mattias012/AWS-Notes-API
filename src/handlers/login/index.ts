@@ -1,4 +1,4 @@
-// src/handlers/login.ts
+//log in handler
 import { APIGatewayProxyHandler } from 'aws-lambda';
 import config from '../../utils/config';
 import { formatJSONResponse } from '../../utils/responseUtils';
