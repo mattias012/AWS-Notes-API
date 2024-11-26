@@ -60,7 +60,6 @@ const deleteNote = async (event) => {
 
 // Export the handler wrapped with Middy
 export const handler = middy(deleteNote)
-  .use(jsonBodyParser()) // Automatically parse JSON body
   .use(authMiddleware()) // Validate Authorization header and token
   .use(
     validator({

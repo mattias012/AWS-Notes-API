@@ -4,19 +4,37 @@ const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
 
 export const authMiddleware = () => ({
   before: (handler) => {
+    //Get authorization header
     const authHeader = handler.event.headers.Authorization || handler.event.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new Error('Missing or invalid Authorization header');
+      console.error('Missing or invalid Authorization header');
+      throw {
+        statusCode: 401,
+        message: 'Unauthorized: Missing or invalid Authorization header',
+      };
     }
 
     const token = authHeader.split(' ')[1];
+
     try {
-      const decoded = jwt.verify(token, JWT_SECRET);
-      handler.event.userId = decoded.userId; // Add userId to the event object
+      //verify token
+      const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
+
+      if (!decoded.userId) {
+        throw new Error('Invalid token payload');
+      }
+
+      //add userId to event object
+      handler.event.userId = decoded.userId;
+
+      console.log(`Authenticated user: ${decoded.userId}`); //include userId in logs for debugging
     } catch (err) {
       console.error('Invalid token:', err.message);
-      throw new Error('Invalid token');
+      throw {
+        statusCode: 401,
+        message: 'Unauthorized: Invalid token',
+      };
     }
   },
 });

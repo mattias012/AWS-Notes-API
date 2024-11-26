@@ -14,6 +14,12 @@ export const onErrorMiddleware = (customErrorMessages: ErrorMessages = {}) => ({
     // Log the full error for debugging
     console.error('Error Middleware Triggered:', JSON.stringify(error, null, 2));
 
+    // Handle errors with statusCode (like from authMiddleware)
+    if (error?.statusCode) {
+      request.response = createErrorResponse(error.statusCode, error.message || 'Error occurred');
+      return;
+    }
+
     // Catch validation errors
     if (error?.name === 'SchemaValidationError') {
       const message = customErrorMessages.validation || 'Validation error. Please check your input.';
