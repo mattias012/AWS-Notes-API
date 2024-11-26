@@ -1,48 +1,199 @@
-//my validator file
-import Joi from 'joi';
+//This is my validator file
+//It is used to validate the incoming request body and path parameters
+//It uses the JSON Schema format to define the structure of the request
+//used together with the @middy/validator middleware
 
-// Define Joi schema for note validation
-export const noteSchema = Joi.object({
-  title: Joi.string().max(50).required().messages({
-    "string.max": "Title must not exceed 50 characters.",
-    "any.required": "Title is required.",
-  }),
-  textdata: Joi.string().max(300).required().messages({
-    "string.max": "Textdata must not exceed 300 characters.",
-    "any.required": "Textdata is required.",
-  }),
-});
+// JSON Schema for creating a note
+export const createNoteSchema = {
+  type: "object",
+  properties: {
+    body: {
+      type: "object",
+      properties: {
+        title: {
+          type: "string",
+          maxLength: 50,
+          errorMessage: {
+            maxLength: "Title must not exceed 50 characters.",
+            type: "Title is required and must be a string.",
+          },
+        },
+        textdata: {
+          type: "string",
+          maxLength: 300,
+          errorMessage: {
+            maxLength: "Textdata must not exceed 300 characters.",
+            type: "Textdata is required and must be a string.",
+          },
+        },
+      },
+      required: ["title", "textdata"],
+      additionalProperties: false,
+      errorMessage: {
+        required: {
+          title: "Title is required.",
+          textdata: "Textdata is required.",
+        },
+        additionalProperties: "Invalid additional properties in request body.",
+      },
+    },
+  },
+  required: ["body"],
+  additionalProperties: false,
+};
 
-// Define Joi schema for updating note
-export const updateNoteSchema = Joi.object({
-  title: Joi.string().max(50).optional().messages({
-    "string.max": "Title must not exceed 50 characters.",
-  }),
-  textdata: Joi.string().max(300).optional().messages({
-    "string.max": "Text must not exceed 300 characters.",
-  }),
-});
+// JSON Schema for deleting a note
+export const deleteNoteSchema = {
+  type: "object",
+  properties: {
+    pathParameters: {
+      type: "object",
+      properties: {
+        noteId: { type: "string" },
+      },
+      required: ["noteId"],
+    },
+  },
+  required: ["pathParameters"],
+};
 
-// Define Joi schema for login validation
-export const loginSchema = Joi.object({
-  email: Joi.string().email().required().messages({
-    "string.email": "Invalid email format.",
-    "any.required": "Email is required.",
-  }),
-  password: Joi.string().required().messages({
-    "any.required": "Password is required.",
-  }),
-});
+// JSON Schema for getting a note
+export const getNoteSchema = {
+  type: "object",
+  properties: {
+    pathParameters: {
+      type: "object",
+      properties: {
+        noteId: { type: "string" },
+      },
+      required: ["noteId"],
+    },
+  },
+  required: ["pathParameters"],
+};
 
-// Define Joi schema for signup validation
-export const signupSchema = Joi.object({
-  email: Joi.string().email().required().messages({
-    "string.email": "Invalid email format.",
-    "any.required": "Email is required.",
-  }),
-  password: Joi.string().min(8).required().messages({
-    "string.min": "Password must be at least 8 characters long.",
-    "any.required": "Password is required.",
-  }),
-});
-
+// JSON Schema for login
+export const loginSchema = {
+  type: "object",
+  properties: {
+    body: {
+      type: "object",
+      properties: {
+        email: {
+          type: "string",
+          format: "email",
+          errorMessage: {
+            format: "Invalid email format.",
+            type: "Email is required and must be a string.",
+          },
+        },
+        password: {
+          type: "string",
+          minLength: 1,
+          errorMessage: {
+            minLength: "Password is required.",
+            type: "Password is required and must be a string.",
+          },
+        },
+      },
+      required: ["email", "password"],
+      additionalProperties: false,
+      errorMessage: {
+        required: {
+          email: "Email is required.",
+          password: "Password is required.",
+        },
+        additionalProperties: "Invalid additional properties in request body.",
+      },
+    },
+  },
+  required: ["body"],
+};
+// JSON Schema for restoring a note
+export const restoreNoteSchema = {
+  type: "object",
+  properties: {
+    pathParameters: {
+      type: "object",
+      properties: {
+        noteId: { type: "string" },
+      },
+      required: ["noteId"],
+    },
+  },
+  required: ["pathParameters"],
+};
+// JSON Schema for signup
+export const signupSchema = {
+  type: "object",
+  properties: {
+    body: {
+      type: "object",
+      properties: {
+        email: {
+          type: "string",
+          format: "email",
+          errorMessage: {
+            format: "Invalid email format.",
+            type: "Email is required and must be a string.",
+          },
+        },
+        password: {
+          type: "string",
+          minLength: 8,
+          errorMessage: {
+            minLength: "Password must be at least 8 characters long.",
+            type: "Password is required and must be a string.",
+          },
+        },
+      },
+      required: ["email", "password"],
+      additionalProperties: false,
+      errorMessage: {
+        required: {
+          email: "Email is required.",
+          password: "Password is required.",
+        },
+        additionalProperties: "Invalid additional properties in request body.",
+      },
+    },
+  },
+  required: ["body"],
+};
+// JSON Schema for updating a note
+export const updateNoteSchema = {
+  type: "object",
+  properties: {
+    body: {
+      type: "object",
+      properties: {
+        title: {
+          type: "string",
+          maxLength: 50,
+          errorMessage: {
+            maxLength: "Title must not exceed 50 characters.",
+          },
+        },
+        textdata: {
+          type: "string",
+          maxLength: 300,
+          errorMessage: {
+            maxLength: "Textdata must not exceed 300 characters.",
+          },
+        },
+      },
+      additionalProperties: false,
+      errorMessage: {
+        additionalProperties: "Invalid additional properties in request body.",
+      },
+    },
+    pathParameters: {
+      type: "object",
+      properties: {
+        noteId: { type: "string" },
+      },
+      required: ["noteId"],
+    },
+  },
+  required: ["body", "pathParameters"],
+};

@@ -1,61 +1,55 @@
-//update a specific note
-import { APIGatewayProxyHandler } from 'aws-lambda';
+import middy from '@middy/core';
+import jsonBodyParser from '@middy/http-json-body-parser';
+import httpErrorHandler from '@middy/http-error-handler';
+import validator from '@middy/validator';
+
 import config from '../../utils/config';
 import { formatJSONResponse } from '../../utils/responseUtils';
-import { UpdateCommand, UpdateCommandOutput } from "@aws-sdk/lib-dynamodb";
-import { ReturnValue } from "@aws-sdk/client-dynamodb";
-import { updateNoteSchema } from '../../utils/validators';
+import { UpdateCommand, UpdateCommandOutput } from '@aws-sdk/lib-dynamodb';
+import { ReturnValue } from '@aws-sdk/client-dynamodb';
+import { updateNoteSchema } from '../../utils/validators'; // Import JSON Schema
 import validateToken from '../../utils/auth';
 
 const NOTES_TABLE = process.env.NOTES_TABLE || 'notes';
 
-export const handler: APIGatewayProxyHandler = async (event) => {
-  try {
-    // Validate Authorization header and get userId
-    const userId = validateToken(event.headers.Authorization);
+// Define the main handler function
+const updateNote = async (event) => {
+  // Validate Authorization header and get userId
+  const userId = validateToken(event.headers.Authorization);
 
-    // Check if noteId exists in path parameters
-    const { noteId } = event.pathParameters || {};
-    if (!noteId) {
-      return formatJSONResponse(400, { message: 'Missing noteId in path parameters.' });
-    }
+  // Extract noteId from path parameters
+  const { noteId } = event.pathParameters || {};
 
-    const body = JSON.parse(event.body || '{}');
+  const { title, textdata } = event.body;
+  const modifiedAt = new Date().toISOString();
 
-    // Validate input with Joi
-    const { error } = updateNoteSchema.validate(body);
-    if (error) {
-      return formatJSONResponse(400, { message: error.details[0].message });
-    }
+  // Update the note in DynamoDB
+  const params = {
+    TableName: NOTES_TABLE,
+    Key: {
+      userId,
+      noteId,
+    },
+    UpdateExpression: 'SET title = :title, textdata = :textdata, modifiedAt = :modifiedAt',
+    ExpressionAttributeValues: {
+      ':title': title,
+      ':textdata': textdata,
+      ':modifiedAt': modifiedAt,
+    },
+    ReturnValues: ReturnValue.ALL_NEW,
+  };
 
-    const { title, textdata } = body;
-    const modifiedAt = new Date().toISOString();
+  const result = await config.dynamoDb.send(new UpdateCommand(params)) as UpdateCommandOutput;
 
-    // Update the note in DynamoDB
-    const params = {
-      TableName: NOTES_TABLE,
-      Key: {
-        userId,
-        noteId,
-      },
-      UpdateExpression: 'SET title = :title, textdata = :textdata, modifiedAt = :modifiedAt',
-      ExpressionAttributeValues: {
-        ':title': title,
-        ':textdata': textdata,
-        ':modifiedAt': modifiedAt,
-      },
-      ReturnValues: ReturnValue.ALL_NEW,
-    };
-
-    const result = await config.dynamoDb.send(new UpdateCommand(params)) as UpdateCommandOutput;
-
-    if (!result.Attributes) {
-      return formatJSONResponse(404, { message: 'Note not found.' });
-    }
-
-    return formatJSONResponse(200, { note: result.Attributes });
-  } catch (error) {
-    console.error('Error in updateNote:', error);
-    return formatJSONResponse(500, { message: error.message || 'Internal Server Error' });
+  if (!result.Attributes) {
+    return formatJSONResponse(404, { message: 'Note not found.' });
   }
+
+  return formatJSONResponse(200, { note: result.Attributes });
 };
+
+// Export the handler wrapped with Middy
+export const handler = middy(updateNote)
+  .use(jsonBodyParser()) // Automatically parse JSON body
+  .use(validator({ eventSchema: updateNoteSchema })) // Use JSON Schema for validation
+  .use(httpErrorHandler()); // Handle errors consistently
