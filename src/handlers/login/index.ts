@@ -6,6 +6,7 @@ import validator from '@middy/validator';
 import config from '../../utils/config';
 import { formatJSONResponse } from '../../utils/responseUtils';
 import { loginSchema } from '../../utils/validators'; // Import JSON Schema for login validation
+import { onErrorMiddleware } from '../../utils/onErrorMiddleware'; // Import global error handler
 
 const USERS_TABLE = process.env.USERS_TABLE || 'users';
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
@@ -24,6 +25,7 @@ const login = async (event) => {
 
   const result = await config.dynamoDb.send(new config.GetCommand(params));
   if (!result.Item) {
+    // Return generic error for invalid credentials
     return formatJSONResponse(401, { message: 'Invalid credentials.' });
   }
 
@@ -32,6 +34,7 @@ const login = async (event) => {
   // Compare passwords
   const validPassword = await config.bcrypt.compare(password, user.password);
   if (!validPassword) {
+    // Return generic error for invalid credentials
     return formatJSONResponse(401, { message: 'Invalid credentials.' });
   }
 
@@ -55,4 +58,5 @@ const login = async (event) => {
 export const handler = middy(login)
   .use(jsonBodyParser()) // Automatically parse JSON body
   .use(validator({ eventSchema: loginSchema })) // Use JSON Schema for validation
+  .use(onErrorMiddleware()) // Global error handler
   .use(httpErrorHandler()); // Handle errors consistently

@@ -3,197 +3,147 @@
 //It uses the JSON Schema format to define the structure of the request
 //used together with the @middy/validator middleware
 
-// JSON Schema for creating a note
+/// JSON Schema for creating a note
 export const createNoteSchema = {
-  type: "object",
-  properties: {
-    body: {
-      type: "object",
-      properties: {
-        title: {
-          type: "string",
-          maxLength: 50,
-          errorMessage: {
-            maxLength: "Title must not exceed 50 characters.",
-            type: "Title is required and must be a string.",
+    type: "object",
+    properties: {
+      body: {
+        type: "object",
+        properties: {
+          title: {
+            type: "string",
+            maxLength: 50,
+          },
+          textdata: {
+            type: "string",
+            maxLength: 300,
           },
         },
-        textdata: {
-          type: "string",
-          maxLength: 300,
-          errorMessage: {
-            maxLength: "Textdata must not exceed 300 characters.",
-            type: "Textdata is required and must be a string.",
+        required: ["title", "textdata"],
+        additionalProperties: false,
+      },
+    },
+    required: ["body"],
+    additionalProperties: false,
+  };
+  
+  // JSON Schema for deleting a note
+  export const deleteNoteSchema = {
+    type: "object",
+    properties: {
+      pathParameters: {
+        type: "object",
+        properties: {
+          noteId: { type: "string" },
+        },
+        required: ["noteId"],
+      },
+    },
+    required: ["pathParameters"],
+  };
+  
+  // JSON Schema for getting a note
+  export const getNoteSchema = {
+    type: "object",
+    properties: {
+      pathParameters: {
+        type: "object",
+        properties: {
+          noteId: { type: "string" },
+        },
+        required: ["noteId"],
+      },
+    },
+    required: ["pathParameters"],
+  };
+  
+  // JSON Schema for login
+  export const loginSchema = {
+    type: "object",
+    properties: {
+      body: {
+        type: "object",
+        properties: {
+          email: {
+            type: "string",
+            format: "email",
+          },
+          password: {
+            type: "string",
+            minLength: 1,
           },
         },
+        required: ["email", "password"],
+        additionalProperties: false,
       },
-      required: ["title", "textdata"],
-      additionalProperties: false,
-      errorMessage: {
-        required: {
-          title: "Title is required.",
-          textdata: "Textdata is required.",
+    },
+    required: ["body"],
+  };
+  
+  // JSON Schema for restoring a note
+  export const restoreNoteSchema = {
+    type: "object",
+    properties: {
+      pathParameters: {
+        type: "object",
+        properties: {
+          noteId: { type: "string" },
         },
-        additionalProperties: "Invalid additional properties in request body.",
+        required: ["noteId"],
       },
     },
-  },
-  required: ["body"],
-  additionalProperties: false,
-};
-
-// JSON Schema for deleting a note
-export const deleteNoteSchema = {
-  type: "object",
-  properties: {
-    pathParameters: {
-      type: "object",
-      properties: {
-        noteId: { type: "string" },
-      },
-      required: ["noteId"],
-    },
-  },
-  required: ["pathParameters"],
-};
-
-// JSON Schema for getting a note
-export const getNoteSchema = {
-  type: "object",
-  properties: {
-    pathParameters: {
-      type: "object",
-      properties: {
-        noteId: { type: "string" },
-      },
-      required: ["noteId"],
-    },
-  },
-  required: ["pathParameters"],
-};
-
-// JSON Schema for login
-export const loginSchema = {
-  type: "object",
-  properties: {
-    body: {
-      type: "object",
-      properties: {
-        email: {
-          type: "string",
-          format: "email",
-          errorMessage: {
-            format: "Invalid email format.",
-            type: "Email is required and must be a string.",
+    required: ["pathParameters"],
+  };
+  
+  // JSON Schema for signup
+  export const signupSchema = {
+    type: "object",
+    properties: {
+      body: {
+        type: "object",
+        properties: {
+          email: {
+            type: "string",
+            format: "email",
+          },
+          password: {
+            type: "string",
+            minLength: 8,
           },
         },
-        password: {
-          type: "string",
-          minLength: 1,
-          errorMessage: {
-            minLength: "Password is required.",
-            type: "Password is required and must be a string.",
-          },
-        },
-      },
-      required: ["email", "password"],
-      additionalProperties: false,
-      errorMessage: {
-        required: {
-          email: "Email is required.",
-          password: "Password is required.",
-        },
-        additionalProperties: "Invalid additional properties in request body.",
+        required: ["email", "password"],
+        additionalProperties: false,
       },
     },
-  },
-  required: ["body"],
-};
-// JSON Schema for restoring a note
-export const restoreNoteSchema = {
-  type: "object",
-  properties: {
-    pathParameters: {
-      type: "object",
-      properties: {
-        noteId: { type: "string" },
-      },
-      required: ["noteId"],
-    },
-  },
-  required: ["pathParameters"],
-};
-// JSON Schema for signup
-export const signupSchema = {
-  type: "object",
-  properties: {
-    body: {
-      type: "object",
-      properties: {
-        email: {
-          type: "string",
-          format: "email",
-          errorMessage: {
-            format: "Invalid email format.",
-            type: "Email is required and must be a string.",
+    required: ["body"],
+  };
+  
+  // JSON Schema for updating a note
+  export const updateNoteSchema = {
+    type: "object",
+    properties: {
+      body: {
+        type: "object",
+        properties: {
+          title: {
+            type: "string",
+            maxLength: 50,
+          },
+          textdata: {
+            type: "string",
+            maxLength: 300,
           },
         },
-        password: {
-          type: "string",
-          minLength: 8,
-          errorMessage: {
-            minLength: "Password must be at least 8 characters long.",
-            type: "Password is required and must be a string.",
-          },
-        },
+        additionalProperties: false,
       },
-      required: ["email", "password"],
-      additionalProperties: false,
-      errorMessage: {
-        required: {
-          email: "Email is required.",
-          password: "Password is required.",
+      pathParameters: {
+        type: "object",
+        properties: {
+          noteId: { type: "string" },
         },
-        additionalProperties: "Invalid additional properties in request body.",
+        required: ["noteId"],
       },
     },
-  },
-  required: ["body"],
-};
-// JSON Schema for updating a note
-export const updateNoteSchema = {
-  type: "object",
-  properties: {
-    body: {
-      type: "object",
-      properties: {
-        title: {
-          type: "string",
-          maxLength: 50,
-          errorMessage: {
-            maxLength: "Title must not exceed 50 characters.",
-          },
-        },
-        textdata: {
-          type: "string",
-          maxLength: 300,
-          errorMessage: {
-            maxLength: "Textdata must not exceed 300 characters.",
-          },
-        },
-      },
-      additionalProperties: false,
-      errorMessage: {
-        additionalProperties: "Invalid additional properties in request body.",
-      },
-    },
-    pathParameters: {
-      type: "object",
-      properties: {
-        noteId: { type: "string" },
-      },
-      required: ["noteId"],
-    },
-  },
-  required: ["body", "pathParameters"],
-};
+    required: ["body", "pathParameters"],
+  };
+  

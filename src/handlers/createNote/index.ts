@@ -1,3 +1,4 @@
+import middy from '@middy/core';
 import jsonBodyParser from '@middy/http-json-body-parser';
 import httpErrorHandler from '@middy/http-error-handler';
 import validator from '@middy/validator';
@@ -5,14 +6,14 @@ import validator from '@middy/validator';
 import { formatJSONResponse } from '../../utils/responseUtils';
 import { createNoteSchema } from '../../utils/validators'; // Import JSON Schema
 import config from '../../utils/config';
-import validateToken from '../../utils/auth'; // Import validateToken function
+import { authMiddleware } from '../../utils/auth'; // Import authMiddleware
 
 const NOTES_TABLE = process.env.NOTES_TABLE || 'notes';
 
 // Define the main handler function
 const createNote = async (event) => {
-  // Validate Authorization header and get userId
-  const userId = validateToken(event.headers.Authorization);
+  // Retrieve userId from event (added by authMiddleware)
+  const userId = event.userId;
 
   // Extract validated body
   const { title, textdata } = event.body;
@@ -44,7 +45,8 @@ const createNote = async (event) => {
 };
 
 // Export the handler wrapped with Middy
-export const handler = config.middy(createNote)
+export const handler = middy(createNote)
   .use(jsonBodyParser()) // Automatically parse JSON body
+  .use(authMiddleware()) // Validate Authorization header and token
   .use(validator({ eventSchema: createNoteSchema })) // Use JSON Schema for validation
   .use(httpErrorHandler()); // Handle errors consistently

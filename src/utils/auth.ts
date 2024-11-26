@@ -5,27 +5,27 @@ import jwt from 'jsonwebtoken';
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
 
 /**
- * Validates the Authorization header and JWT token.
- * @param {string | undefined} authHeader - The Authorization header to be validated.
- * @returns {string} - The user ID if the token is valid.
- * @throws {Error} - If the Authorization header or token is invalid.
+ * Middy middleware for validating JWT tokens.
+ * Adds `userId` to the `request.event` if the token is valid.
  */
-const validateToken = (authHeader: string | undefined): string => {
-  if (!authHeader) {
-    throw new Error('Missing Authorization header.');
-  }
+export const authMiddleware = () => ({
+  before: (request: any) => {
+    const authHeader = request.event.headers.Authorization;
 
-  const token = authHeader.split(' ')[1];
-  if (!token) {
-    throw new Error('Missing or invalid Authorization token.');
-  }
+    if (!authHeader) {
+      throw new Error('Missing Authorization header.');
+    }
 
-  try {
-    const decodedToken = jwt.verify(token, JWT_SECRET);
-    return (decodedToken as any).userId; // Extract the userId from the token
-  } catch (error) {
-    throw new Error('Invalid token');
-  }
-};
+    const token = authHeader.split(' ')[1];
+    if (!token) {
+      throw new Error('Missing or invalid Authorization token.');
+    }
 
-export default validateToken;
+    try {
+      const decodedToken = jwt.verify(token, JWT_SECRET);
+      request.event.userId = (decodedToken as any).userId; // add userId to the event
+    } catch (error) {
+      throw new Error('Invalid token');
+    }
+  },
+});

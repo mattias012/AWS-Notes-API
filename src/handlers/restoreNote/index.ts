@@ -5,7 +5,8 @@ import validator from '@middy/validator';
 import config from '../../utils/config'; // Import config for DynamoDB commands, etc.
 import { UpdateCommand, UpdateCommandOutput } from '@aws-sdk/lib-dynamodb'; // Import UpdateCommand to update item in DynamoDB
 import { formatJSONResponse } from '../../utils/responseUtils'; // Helper function to format responses
-import validateToken from '../../utils/auth'; // Import validateToken for token validation
+import { authMiddleware } from '../../utils/auth'; // Import Middy auth middleware
+import { onErrorMiddleware } from '../../utils/onErrorMiddleware'; // Import global error handler
 import { restoreNoteSchema } from '../../utils/validators'; // Import JSON Schema for validation
 import { ReturnValue } from '@aws-sdk/client-dynamodb'; // Import ReturnValue for TypeScript typing
 
@@ -13,8 +14,8 @@ const NOTES_TABLE = process.env.NOTES_TABLE || 'notes';
 
 // Define the main handler function
 const restoreNote = async (event) => {
-  // Validate Authorization header and get userId
-  const userId = validateToken(event.headers.Authorization);
+  // Retrieve userId from event (set by authMiddleware)
+  const userId = event.userId;
 
   // Extract noteId from path parameters
   const { noteId } = event.pathParameters || {};
@@ -51,5 +52,7 @@ const restoreNote = async (event) => {
 
 // Export the handler wrapped with Middy
 export const handler = middy(restoreNote)
+  .use(authMiddleware()) // Validate Authorization header and token
   .use(validator({ eventSchema: restoreNoteSchema })) // Validate input with JSON Schema
+  .use(onErrorMiddleware()) // Global error handler
   .use(httpErrorHandler()); // Handle errors consistently

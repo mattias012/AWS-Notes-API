@@ -6,6 +6,8 @@ import validator from '@middy/validator';
 import config from '../../utils/config';
 import { formatJSONResponse } from '../../utils/responseUtils';
 import { signupSchema } from '../../utils/validators'; // Import JSON Schema for signup validation
+import { ERROR_MESSAGES, createErrorResponse } from '../../utils/errorHandler'; // Import error handling utilities
+import { onErrorMiddleware } from '../../utils/onErrorMiddleware'; // Import custom error middleware
 
 const USERS_TABLE = process.env.USERS_TABLE || 'users';
 
@@ -23,7 +25,8 @@ const signUp = async (event) => {
 
   const result = await config.dynamoDb.send(new config.GetCommand(getUserParams));
   if (result.Item) {
-    return formatJSONResponse(400, { message: 'User with this email already exists.' });
+    // Return error if the user already exists
+    return createErrorResponse(400, ERROR_MESSAGES.USER_EXISTS);
   }
 
   // Hash the password
@@ -50,4 +53,8 @@ const signUp = async (event) => {
 export const handler = middy(signUp)
   .use(jsonBodyParser()) // Automatically parse JSON body
   .use(validator({ eventSchema: signupSchema })) // Use JSON Schema for validation
+  .use(onErrorMiddleware({
+    validation: 'Invalid signup data. Please check your input.',
+    internal: 'Unable to process signup at this time.',
+  })) // Custom error messages for this handler
   .use(httpErrorHandler()); // Handle errors consistently

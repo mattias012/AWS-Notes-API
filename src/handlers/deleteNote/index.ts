@@ -6,16 +6,17 @@ import validator from '@middy/validator';
 import config from '../../utils/config'; // Import config for DynamoDB commands, etc.
 import { UpdateCommand, UpdateCommandOutput } from '@aws-sdk/lib-dynamodb'; // Import UpdateCommand to update the item in DynamoDB
 import { formatJSONResponse } from '../../utils/responseUtils'; // Helper function to format responses
-import validateToken from '../../utils/auth'; // Import validateToken for token validation
 import { deleteNoteSchema } from '../../utils/validators'; // Import the schema
 import { ReturnValue } from '@aws-sdk/client-dynamodb'; // Import ReturnValue for TypeScript typing
+import { authMiddleware } from '../../utils/auth'; // Import Middy auth middleware
+import { onErrorMiddleware } from '../../utils/onErrorMiddleware'; // Import global error handler
 
 const NOTES_TABLE = process.env.NOTES_TABLE || 'notes';
 
 // Define the main handler function
 const deleteNote = async (event) => {
-  // Validate token and extract userId
-  const userId = validateToken(event.headers.Authorization);
+  // Retrieve userId from event (set by authMiddleware)
+  const userId = event.userId;
 
   // Extract noteId from path parameters
   const { noteId } = event.pathParameters || {};
@@ -59,5 +60,7 @@ const deleteNote = async (event) => {
 // Export the handler wrapped with Middy
 export const handler = middy(deleteNote)
   .use(jsonBodyParser()) // Automatically parse JSON body
+  .use(authMiddleware()) // Validate Authorization header and token
   .use(validator({ eventSchema: deleteNoteSchema })) // Use JSON Schema for validation
+  .use(onErrorMiddleware()) // Custom global error handler
   .use(httpErrorHandler()); // Handle errors consistently

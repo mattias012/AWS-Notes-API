@@ -1,17 +1,19 @@
 import middy from '@middy/core';
 import httpErrorHandler from '@middy/http-error-handler';
+import jsonBodyParser from '@middy/http-json-body-parser';
 
 import config from '../../utils/config'; // Import the whole config as an object
 import { formatJSONResponse } from '../../utils/responseUtils';
 import { QueryCommand, QueryCommandOutput } from '@aws-sdk/lib-dynamodb';
-import validateToken from '../../utils/auth';
+import { authMiddleware } from '../../utils/auth'; // Import Middy auth middleware
+import { onErrorMiddleware } from '../../utils/onErrorMiddleware'; // Import global error handler
 
 const NOTES_TABLE = process.env.NOTES_TABLE || 'notes';
 
 // Define the main handler function
 const getNotes = async (event) => {
-  // Validate token and extract userId
-  const userId = validateToken(event.headers.Authorization);
+  // Retrieve userId from event (set by authMiddleware)
+  const userId = event.userId;
 
   // Query DynamoDB to get all notes for the user
   const params = {
@@ -37,4 +39,7 @@ const getNotes = async (event) => {
 
 // Export the handler wrapped with Middy
 export const handler = middy(getNotes)
+  .use(jsonBodyParser()) // Automatically parse JSON body (if needed)
+  .use(authMiddleware()) // Validate Authorization header and token
+  .use(onErrorMiddleware()) // Handle global errors
   .use(httpErrorHandler()); // Handle errors consistently

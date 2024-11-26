@@ -8,14 +8,15 @@ import { formatJSONResponse } from '../../utils/responseUtils';
 import { UpdateCommand, UpdateCommandOutput } from '@aws-sdk/lib-dynamodb';
 import { ReturnValue } from '@aws-sdk/client-dynamodb';
 import { updateNoteSchema } from '../../utils/validators'; // Import JSON Schema
-import validateToken from '../../utils/auth';
+import { authMiddleware } from '../../utils/auth'; // Import Middy auth middleware
+import { onErrorMiddleware } from '../../utils/onErrorMiddleware'; // Import global error handler
 
 const NOTES_TABLE = process.env.NOTES_TABLE || 'notes';
 
 // Define the main handler function
 const updateNote = async (event) => {
-  // Validate Authorization header and get userId
-  const userId = validateToken(event.headers.Authorization);
+  // Retrieve userId from event (set by authMiddleware)
+  const userId = event.userId;
 
   // Extract noteId from path parameters
   const { noteId } = event.pathParameters || {};
@@ -51,5 +52,7 @@ const updateNote = async (event) => {
 // Export the handler wrapped with Middy
 export const handler = middy(updateNote)
   .use(jsonBodyParser()) // Automatically parse JSON body
+  .use(authMiddleware()) // Validate Authorization header and token
   .use(validator({ eventSchema: updateNoteSchema })) // Use JSON Schema for validation
+  .use(onErrorMiddleware()) // Global error handler
   .use(httpErrorHandler()); // Handle errors consistently
