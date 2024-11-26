@@ -1,17 +1,17 @@
-//restore delete specific note
+// restore delete specific note
 import { APIGatewayProxyHandler } from 'aws-lambda';
 import config from '../../utils/config'; // Import config for DynamoDB commands, etc.
 import { UpdateCommand, UpdateCommandOutput } from '@aws-sdk/lib-dynamodb'; // Import UpdateCommand to update item in DynamoDB
 import { formatJSONResponse } from '../../utils/responseUtils'; // Helper function to format responses
-import validateAuthorizationHeader from '../../utils/auth'; // Import validateAuthorizationHeader for token validation
+import validateToken from '../../utils/auth'; // Corrected Import: Import validateToken for token validation
 import { ReturnValue } from "@aws-sdk/client-dynamodb"; // Import ReturnValue for TypeScript typing
 
 const NOTES_TABLE = process.env.NOTES_TABLE || 'notes';
 
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
-    // Validate token and extract userId
-    const userId = validateAuthorizationHeader(event.headers.Authorization);
+    // Validate Authorization header and get userId
+    const userId = validateToken(event.headers.Authorization);
 
     // Check if noteId exists in path parameters
     const { noteId } = event.pathParameters || {};

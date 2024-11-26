@@ -24,7 +24,7 @@ const validateToken = (authHeader: string | undefined): string => {
     const decodedToken = jwt.verify(token, JWT_SECRET);
     return (decodedToken as any).userId; // Extract the userId from the token
   } catch (error) {
-    throw new Error('Invalid token.');
+    throw new Error('Invalid token');
   }
 };
 
