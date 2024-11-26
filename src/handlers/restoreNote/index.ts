@@ -1,6 +1,7 @@
 import middy from '@middy/core';
 import httpErrorHandler from '@middy/http-error-handler';
 import validator from '@middy/validator';
+import { transpileSchema } from '@middy/validator/transpile';
 
 import config from '../../utils/config'; // Import config for DynamoDB commands, etc.
 import { UpdateCommand, UpdateCommandOutput } from '@aws-sdk/lib-dynamodb'; // Import UpdateCommand to update item in DynamoDB
@@ -14,6 +15,8 @@ const NOTES_TABLE = process.env.NOTES_TABLE || 'notes';
 
 // Define the main handler function
 const restoreNote = async (event) => {
+  console.log("Event received:", event); // Debugging the incoming event
+
   // Retrieve userId from event (set by authMiddleware)
   const userId = event.userId;
 
@@ -53,6 +56,10 @@ const restoreNote = async (event) => {
 // Export the handler wrapped with Middy
 export const handler = middy(restoreNote)
   .use(authMiddleware()) // Validate Authorization header and token
-  .use(validator({ eventSchema: restoreNoteSchema })) // Validate input with JSON Schema
+  .use(
+    validator({
+      eventSchema: transpileSchema(restoreNoteSchema), // Transpile JSON Schema for validation
+    })
+  )
   .use(onErrorMiddleware()) // Global error handler
   .use(httpErrorHandler()); // Handle errors consistently

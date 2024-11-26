@@ -2,6 +2,7 @@ import middy from '@middy/core';
 import jsonBodyParser from '@middy/http-json-body-parser';
 import httpErrorHandler from '@middy/http-error-handler';
 import validator from '@middy/validator';
+import { transpileSchema } from '@middy/validator/transpile';
 
 import config from '../../utils/config'; // Import config for DynamoDB commands, etc.
 import { UpdateCommand, UpdateCommandOutput } from '@aws-sdk/lib-dynamodb'; // Import UpdateCommand to update the item in DynamoDB
@@ -61,6 +62,10 @@ const deleteNote = async (event) => {
 export const handler = middy(deleteNote)
   .use(jsonBodyParser()) // Automatically parse JSON body
   .use(authMiddleware()) // Validate Authorization header and token
-  .use(validator({ eventSchema: deleteNoteSchema })) // Use JSON Schema for validation
+  .use(
+    validator({
+      eventSchema: transpileSchema(deleteNoteSchema), // Transpile JSON Schema for Ajv compatibility
+    })
+  )
   .use(onErrorMiddleware()) // Custom global error handler
   .use(httpErrorHandler()); // Handle errors consistently

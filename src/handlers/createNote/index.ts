@@ -2,6 +2,7 @@ import middy from '@middy/core';
 import jsonBodyParser from '@middy/http-json-body-parser';
 import httpErrorHandler from '@middy/http-error-handler';
 import validator from '@middy/validator';
+import { transpileSchema } from '@middy/validator/transpile';
 
 import { formatJSONResponse } from '../../utils/responseUtils';
 import { createNoteSchema } from '../../utils/validators'; // Import JSON Schema
@@ -48,5 +49,9 @@ const createNote = async (event) => {
 export const handler = middy(createNote)
   .use(jsonBodyParser()) // Automatically parse JSON body
   .use(authMiddleware()) // Validate Authorization header and token
-  .use(validator({ eventSchema: createNoteSchema })) // Use JSON Schema for validation
+  .use(
+    validator({
+      eventSchema: transpileSchema(createNoteSchema), // Transpile JSON Schema
+    })
+  )
   .use(httpErrorHandler()); // Handle errors consistently

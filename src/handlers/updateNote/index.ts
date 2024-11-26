@@ -2,6 +2,7 @@ import middy from '@middy/core';
 import jsonBodyParser from '@middy/http-json-body-parser';
 import httpErrorHandler from '@middy/http-error-handler';
 import validator from '@middy/validator';
+import { transpileSchema } from '@middy/validator/transpile';
 
 import config from '../../utils/config';
 import { formatJSONResponse } from '../../utils/responseUtils';
@@ -15,6 +16,8 @@ const NOTES_TABLE = process.env.NOTES_TABLE || 'notes';
 
 // Define the main handler function
 const updateNote = async (event) => {
+  console.log("Event received:", event); // Debugging the incoming event
+
   // Retrieve userId from event (set by authMiddleware)
   const userId = event.userId;
 
@@ -53,6 +56,10 @@ const updateNote = async (event) => {
 export const handler = middy(updateNote)
   .use(jsonBodyParser()) // Automatically parse JSON body
   .use(authMiddleware()) // Validate Authorization header and token
-  .use(validator({ eventSchema: updateNoteSchema })) // Use JSON Schema for validation
+  .use(
+    validator({
+      eventSchema: transpileSchema(updateNoteSchema), // Transpile JSON Schema for validation
+    })
+  )
   .use(onErrorMiddleware()) // Global error handler
   .use(httpErrorHandler()); // Handle errors consistently

@@ -12,6 +12,8 @@ const NOTES_TABLE = process.env.NOTES_TABLE || 'notes';
 
 // Define the main handler function
 const getNotes = async (event) => {
+  console.log("Event received:", event); // Debugging the incoming event
+
   // Retrieve userId from event (set by authMiddleware)
   const userId = event.userId;
 
