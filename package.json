@@ -11,17 +11,20 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@types/aws-lambda": "^8.10.146",
     "@types/node": "^22.9.1",
     "typescript": "^5.6.3"
   },
   "dependencies": {
     "@aws-sdk/lib-dynamodb": "^3.698.0",
     "@middy/core": "^5.5.1",
+    "@middy/http-error-handler": "^6.0.0",
+    "@middy/http-json-body-parser": "^6.0.0",
+    "@middy/validator": "^6.0.0",
     "bcryptjs": "^2.4.3",
     "dotenv": "^16.4.5",
     "joi": "^17.13.3",
     "jsonwebtoken": "^9.0.2",
-    "middy": "^0.24.0",
     "serverless": "^4.4.11"
   }
 }

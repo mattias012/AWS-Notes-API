@@ -1,31 +1,40 @@
-//auth moved out from the handler to a separate file
-//this needs to be imported in the handler file where it is used
 import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
 
-/**
- * Validates the Authorization header and JWT token.
- * @param {string | undefined} authHeader - The Authorization header to be validated.
- * @returns {string} - The user ID if the token is valid.
- * @throws {Error} - If the Authorization header or token is invalid.
- */
-const validateToken = (authHeader: string | undefined): string => {
-  if (!authHeader) {
-    throw new Error('Missing Authorization header.');
-  }
+export const authMiddleware = () => ({
+  before: (handler) => {
+    //Get authorization header
+    const authHeader = handler.event.headers.Authorization || handler.event.headers.authorization;
 
-  const token = authHeader.split(' ')[1];
-  if (!token) {
-    throw new Error('Missing or invalid Authorization token.');
-  }
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.error('Missing or invalid Authorization header');
+      throw {
+        statusCode: 401,
+        message: 'Unauthorized: Missing or invalid Authorization header',
+      };
+    }
 
-  try {
-    const decodedToken = jwt.verify(token, JWT_SECRET);
-    return (decodedToken as any).userId; // Extract the userId from the token
-  } catch (error) {
-    throw new Error('Invalid token.');
-  }
-};
+    const token = authHeader.split(' ')[1];
 
-export default validateToken;
+    try {
+      //verify token
+      const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
+
+      if (!decoded.userId) {
+        throw new Error('Invalid token payload');
+      }
+
+      //add userId to event object
+      handler.event.userId = decoded.userId;
+
+      console.log(`Authenticated user: ${decoded.userId}`); //include userId in logs for debugging
+    } catch (err) {
+      console.error('Invalid token:', err.message);
+      throw {
+        statusCode: 401,
+        message: 'Unauthorized: Invalid token',
+      };
+    }
+  },
+});

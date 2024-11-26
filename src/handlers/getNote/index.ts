@@ -1,44 +1,50 @@
-//getNote function
-//gets a specific note from the DynamoDB table
-import { APIGatewayProxyHandler } from 'aws-lambda';
+import middy from '@middy/core';
+import jsonBodyParser from '@middy/http-json-body-parser';
+import httpErrorHandler from '@middy/http-error-handler';
+import validator from '@middy/validator';
+import { transpileSchema } from '@middy/validator/transpile';
+
 import config from '../../utils/config';
 import { formatJSONResponse } from '../../utils/responseUtils';
-import { GetCommand, GetCommandOutput } from "@aws-sdk/lib-dynamodb";
-import validateToken from '../../utils/auth';
+import { GetCommand, GetCommandOutput } from '@aws-sdk/lib-dynamodb';
+import { authMiddleware } from '../../utils/auth'; // Import Middy auth middleware
+import { onErrorMiddleware } from '../../utils/onErrorMiddleware'; // Import global error handler
+import { getNoteSchema } from '../../utils/validators'; // Import the schema
 
 const NOTES_TABLE = process.env.NOTES_TABLE || 'notes';
 
-export const handler: APIGatewayProxyHandler = async (event) => {
-  try {
-    // Validate token and extract userId
-    const userId = validateToken(event.headers.Authorization);
+// Define the main handler function
+const getNote = async (event) => {
+  console.log("Event received:", event); // Debugging input
 
-    // Check if noteId exists in path parameters
-    const { noteId } = event.pathParameters || {};
-    if (!noteId) {
-      return formatJSONResponse(400, { message: 'Missing noteId in path parameters.' });
-    }
+  // Retrieve userId from event (set by authMiddleware)
+  const userId = event.userId;
 
-    // Get the specific note from DynamoDB
-    const params = {
-      TableName: NOTES_TABLE,
-      Key: {
-        userId,
-        noteId,
-      },
-    };
+  // Extract noteId from path parameters
+  const { noteId } = event.pathParameters || {};
 
-    const result = await config.dynamoDb.send(new GetCommand(params)) as GetCommandOutput;
+  // Get the specific note from DynamoDB
+  const params = {
+    TableName: NOTES_TABLE,
+    Key: {
+      userId,
+      noteId,
+    },
+  };
 
-    // Check if the note exists and if it is not marked as deleted
-    if (!result.Item || result.Item.deleted) {
-      return formatJSONResponse(404, { message: 'Note not found or has been deleted.' });
-    }
+  const result = await config.dynamoDb.send(new GetCommand(params)) as GetCommandOutput;
 
-    // Return the requested note
-    return formatJSONResponse(200, { note: result.Item });
-  } catch (error) {
-    console.error('Error in getNote:', error);
-    return formatJSONResponse(500, { message: 'Internal Server Error' });
+  // Check if the note exists and if it is not marked as deleted
+  if (!result.Item || result.Item.deleted) {
+    return formatJSONResponse(404, { message: 'Note not found or has been deleted.' });
   }
+
+  // Return the requested note
+  return formatJSONResponse(200, { note: result.Item });
 };
+
+// Export the handler wrapped with Middy
+export const handler = middy(getNote)
+  .use(authMiddleware()) // Validate Authorization header and token
+  .use(onErrorMiddleware()) // Handle global errors
+  .use(httpErrorHandler()); // Handle errors consistently
