@@ -19,12 +19,11 @@ export const createNoteSchema = {
             maxLength: 300,
           },
         },
-        required: ["title", "textdata"],
+        required: ["title", "textdata"], // Här kontrolleras att dessa finns i body
         additionalProperties: false,
       },
     },
-    required: ["body"],
-    additionalProperties: false,
+    required: ["body"], // Här kontrolleras att body finns
   };
   
   // JSON Schema for deleting a note

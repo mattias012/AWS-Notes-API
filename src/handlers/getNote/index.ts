@@ -47,10 +47,5 @@ const getNote = async (event) => {
 export const handler = middy(getNote)
   .use(jsonBodyParser()) // Automatically parse JSON body (optional for GET)
   .use(authMiddleware()) // Validate Authorization header and token
-  .use(
-    validator({
-      eventSchema: transpileSchema(getNoteSchema), // Transpile JSON Schema
-    })
-  )
   .use(onErrorMiddleware()) // Handle global errors
   .use(httpErrorHandler()); // Handle errors consistently

@@ -41,7 +41,6 @@ const getNotes = async (event) => {
 
 // Export the handler wrapped with Middy
 export const handler = middy(getNotes)
-  .use(jsonBodyParser()) // Automatically parse JSON body (if needed)
   .use(authMiddleware()) // Validate Authorization header and token
   .use(onErrorMiddleware()) // Handle global errors
   .use(httpErrorHandler()); // Handle errors consistently

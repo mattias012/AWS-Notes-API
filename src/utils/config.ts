@@ -5,7 +5,6 @@ import { DynamoDBDocumentClient, PutCommand, GetCommand } from "@aws-sdk/lib-dyn
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
-import middy from '@middy/core'; 
 
 // Load environment variables from .env file
 dotenv.config();
@@ -21,6 +20,5 @@ export default {
   GetCommand,
   bcrypt,
   jwt,
-  uuidv4,
-  middy
+  uuidv4
 };
